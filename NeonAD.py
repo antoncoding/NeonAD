@@ -97,13 +97,9 @@ def bid_for_board(board_id, bidder, bid, content):
     highest_bid_key = get_highest_bid_key(board_id)
     highest_bid = Get(ctx, highest_bid_key)
     if bid > highest_bid:
-        highest_bidder_key = get_highest_bidder_key(board_id)
-        Put(ctx, highest_bidder_key, bidder)
-
         Put(ctx, highest_bid_key, bid)
-
-        next_content_key = get_next_content_key(board_id)
-        Put(ctx, next_content_key, content)
+        Put(ctx, get_highest_bidder_key(board_id), bidder)
+        Put(ctx, get_next_content_key(board_id), content)
         return True
 
     else:
@@ -169,6 +165,25 @@ def Main(operation, args):
             return 'Bid Placed'
         else:
             return 'Bid Failed'
+
+
+    elif operation == "EditContent":
+        """
+        args[1] := board ID
+        args[2] := new content
+        """
+        board_id = args[1]
+        new_content = args[2]
+        if user_hash != Get(ctx, get_owner_key(board_id)):
+            print('User is not authenticated to edit content of this board')
+            return False
+        else:
+            '''
+            Some Other checks on the incoming content
+            '''
+            Put(ctx, get_content_key(board_id), new_content)
+            return True
+
 
     # Functions Only Available from Owner
     elif operation == "SetDefaultContent":
