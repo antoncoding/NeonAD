@@ -3,9 +3,12 @@ from boa.interop.Neo.Storage import GetContext, Put, Delete, Get
 from boa.interop.Neo.Blockchain import GetHeader, GetHeight
 from boa.interop.Neo.Header import GetTimestamp
 from boa.builtins import concat
-from NeonAdUtil import *
+from util import *
 
 ctx = GetContext()
+AD_COUNT_KEY = "NeonAD.count"
+DEFAULT_CONTENT_KEY = "NeonAD.default"
+COUNTRACT_OWNER = b'#\xba\'\x03\xc52c\xe8\xd6\xe5"\xdc2 39\xdc\xd8\xee\xe9'
 
 def get_current_timestamp():
     current_height = GetHeight()
@@ -15,16 +18,14 @@ def get_current_timestamp():
 
 
 def get_ad_count():
-    ad_count_key = "NeonAD.count"
-    ad_registered = Get(ctx, ad_count_key)
+    ad_registered = Get(ctx, AD_COUNT_KEY)
     if ad_registered != None:
         return ad_registered
     return 0
 
 
 def get_default_content():
-    default_content_key = "NeonAD.default"
-    default_content = Get(ctx, default_content_key)
+    default_content = Get(ctx, DEFAULT_CONTENT_KEY)
     return default_content
 
 
@@ -118,14 +119,14 @@ def Main(operation, args):
     :param args: list of arguments.
         args[0] is always sender script hash
     """
-    contract_owner = b'#\xba\'\x03\xc52c\xe8\xd6\xe5"\xdc2 39\xdc\xd8\xee\xe9'
     user_hash = args[0]
 
+    # Functions that can be called by anyone
     if operation == "GetEndTime":
         board_id = args[1]
         return Get(ctx, get_endtime_key(board_id))
 
-    # # Everything after this requires authorization
+    # # Functions that Require Authorization
     authorized = CheckWitness(user_hash)
     if not authorized:
         return False
@@ -141,7 +142,7 @@ def Main(operation, args):
 
         ad_count = get_ad_count() + 1
         board_id = concat("NeonAD", ad_count)
-        Put(ctx, "NeonAD.count", ad_count)
+        Put(ctx, AD_COUNT_KEY, ad_count)
 
         init_sucess = init_board_info(board_id, user_hash, period, domain_name)
         update_success = update_board_round(board_id)
@@ -155,7 +156,6 @@ def Main(operation, args):
         args[2] := Bid (NEP)
         args[3] := Content
         """
-
         board_id = args[1]
         bid = args[2]
 
@@ -170,13 +170,13 @@ def Main(operation, args):
         else:
             return 'Bid Failed'
 
-
+    # Functions Only Available from Owner
     elif operation == "SetDefaultContent":
-        if CheckWitness(contract_owner):
+        if CheckWitness(COUNTRACT_OWNER):
             ad_content = args[1]
-            Put(ctx, "NeonAD.default", ad_content)
+            Put(ctx, DEFAULT_CONTENT_KEY, ad_content)
             return ad_content
         else:
             print('This Function can only be triggered by admin')
 
-    return 'Failed'
+    return False
