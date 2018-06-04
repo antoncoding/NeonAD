@@ -32,11 +32,7 @@ def Main(operation, args):
     if trigger == Verification():
 
         # check if the invoker is the owner of this contract
-        is_owner = CheckWitness(TOKEN_OWNER)
-
-        # If owner, proceed
-        if is_owner:
-
+        if CheckWitness(TOKEN_OWNER):
             return True
 
         # Otherwise, we need to lookup the assets and determine

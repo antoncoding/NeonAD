@@ -75,11 +75,8 @@ def do_transfer(ctx, t_from, t_to, amount):
             Put(ctx, t_from, difference)
 
         to_value = Get(ctx, t_to)
-
         to_total = to_value + amount
-
         Put(ctx, t_to, to_total)
-
         OnTransfer(t_from, t_to, amount)
 
         return True
