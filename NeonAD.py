@@ -1,10 +1,12 @@
 from boa.interop.Neo.Runtime import CheckWitness, Log, GetTime, GetTrigger, Serialize, Deserialize
 from boa.interop.Neo.Storage import GetContext, Put, Delete, Get
+from boa.interop.Neo.Action import RegisterAction
 from boa.interop.Neo.Blockchain import GetHeader, GetHeight
 from boa.interop.Neo.Header import GetTimestamp
 from boa.interop.Neo.TriggerType import Application, Verification
+
 from boa.builtins import concat
-# Key and other function Definition
+# Key retreival functions Definition
 from util import *
 # ICO Template
 from nad.txio import get_asset_attachments
@@ -12,6 +14,8 @@ from nad.token import *
 from nad.crowdsale import *
 from nad.nep5 import *
 
+
+OnTransfer = RegisterAction('transfer', 'addr_from', 'addr_to', 'amount')
 ctx = GetContext()
 NEP5_METHODS = ['name', 'symbol', 'decimals', 'totalSupply', 'balanceOf', 'transfer', 'transferFrom', 'approve', 'allowance']
 
@@ -81,7 +85,7 @@ def Main(operation, args):
             return create_board(ctx, args)
 
         elif operation == "bidForBoard":
-            return bid_for_ad(ctx, args)
+            return bid_for_board(ctx, args)
 
         elif operation == "editContent":
             return edit_content(ctx, args)
@@ -148,13 +152,22 @@ def add_new_board(board_id):
 def check_board_exist(board_id):
     serialized_list = Get(ctx, AD_LIST_KEY)
     board_list = Deserialize(serialized_list)
-    if board_id in board_list:
-        return True
-    else:
-        return False
+    for _id in board_list:
+        if _id == board_id:
+            return True
+    return False
 
 def update_board_round(board_id):
     # update ruond end date
+
+    payment = Get(ctx, get_highest_bid_key(board_id))
+    board_admin = Get(ctx, get_ad_admin_key(board_id))
+    # pay web owner
+    if payment > 0:
+        success = pay_in_token(ctx, CONTRACT_OWNER, board_admin, payment)
+        if not success:
+            return False
+
     period = Get(ctx, get_period_key(board_id))
     round_end = GetTime() + period
     Put(ctx, get_endtime_key(board_id), round_end)
@@ -190,16 +203,24 @@ def check_expired(board_id):
     return True
 
 
-def bid_for_board(board_id, bidder, bid, content):
+def do_bid(board_id, bidder, bid, content):
     if bid <= 0:
-        ''' and other value checking'''
         return False
-    '''
-    Check Balance
-    '''
+
     # Bid is Valid
     highest_bid = Get(ctx, get_highest_bid_key(board_id))
     if bid > highest_bid:
+
+        # pay to system
+        payment_success = pay_in_token(ctx, bidder, CONTRACT_OWNER, bid)
+        if payment_success == False:
+            print('Bid failed')
+            return False
+
+        # refund last bidder
+        last_bidder = Get(ctx, get_highest_bidder_key(board_id))
+        refund_success = pay_in_token(ctx, CONTRACT_OWNER, last_bidder, highest_bid)
+
         Put(ctx, get_highest_bid_key(board_id), bid)
         Put(ctx, get_highest_bidder_key(board_id), bidder)
         Put(ctx, get_next_content_key(board_id), content)
@@ -213,6 +234,9 @@ def bid_for_board(board_id, bidder, bid, content):
 def get_endtime(ctx, args):
     if len(args) == 2:
         board_id = args[1]
+        if not check_board_exist(board_id):
+            return False
+
         return Get(ctx, get_endtime_key(board_id))
 
 
@@ -236,15 +260,18 @@ def create_board(ctx, args):
         return board_id
 
 
-def bid_for_ad(ctx, args):
+def bid_for_board(ctx, args):
     """
     args[1] := board ID
     args[2] := Bid (NEP)
     args[3] := Content
     """
-    if len(args) ==4 :
+    if len(args) ==4:
         user_hash = args[0]
         board_id = args[1]
+        if not check_board_exist(board_id):
+            print('boad id error')
+            return False
         bid = args[2]
         expired = check_expired(board_id)
         if expired:
@@ -256,7 +283,7 @@ def bid_for_ad(ctx, args):
                 return False
 
         content = args[3]
-        if bid_for_board(board_id, user_hash, bid, content) == True:
+        if do_bid(board_id, user_hash, bid, content) == True:
             return 'Bid Placed'
 
     return 'Bid Failed'
@@ -272,6 +299,9 @@ def edit_content(ctx, args):
         user_hash = args[0]
         board_id = args[1]
         new_content = args[2]
+        if not check_board_exist(board_id):
+            return False
+
         if user_hash != Get(ctx, get_owner_key(board_id)):
             print('User is not authenticated to edit content of this board')
             return False
@@ -293,3 +323,32 @@ def set_default_content(ctx, args):
     else:
         print('This Function can only be triggered by admin')
         return False
+
+
+def pay_in_token(ctx, t_from, t_to, amount):
+    print('Start Paying')
+    if amount <= 0:
+        return False
+    if len(t_to) != 20:
+        return False
+    if t_from == t_to:
+        print("transfer to self!")
+        return True
+
+    from_balance = Get(ctx, t_from)
+    if from_balance < amount:
+        print("insufficient funds")
+        return False
+    elif from_balance == amount:
+        Delete(ctx, t_from)
+    else:
+        difference = from_balance - amount
+        Put(ctx, t_from, difference)
+
+    to_balance = Get(ctx, t_to)
+    to_total = to_balance + amount
+    Put(ctx, t_to, to_total)
+
+    OnTransfer(t_from, t_to, amount)
+
+    return True
