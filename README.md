@@ -17,6 +17,7 @@ We will integrate this feature to `nOS virtual browser`, which is a NEO-backend 
 * **Token Symbol**: NAD
 * **Token Standard**: NEP5
 * **Total Supply**: 10,000,000
+* **Decimals**: 8
 
 
 ### Roadmap
@@ -24,5 +25,18 @@ We will integrate this feature to `nOS virtual browser`, which is a NEO-backend 
 * nOS Interface
   - Also a relay server for non-blockchain browsers
 
+### Functions
+* `deploy`
+* `getBoardList`
+* `getContent`
+* `createBoard`
+* `bidForBoard`
+* `editContent`
+* `setDefaultContent`
+
+
 ### Contract Hash:
-> Will be provided soon
+> 0xa9d75040f97bf2fb5bec11592bf7a36b222f626d
+
+The Contract Hash should be the same if you deploy our `.avm` file
+Use this hash to add our token to your list
