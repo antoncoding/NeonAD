@@ -136,7 +136,7 @@ def get_baord_list():
 
 
 def get_content(ctx, args):
-    if len(args)==4:
+    if len(args)==2:
         board_id = args[1]
         return Get(ctx, get_content_key(board_id))
 
@@ -262,6 +262,7 @@ def create_board(ctx, args):
 
 def bid_for_board(ctx, args):
     """
+    args[0] := user_hash
     args[1] := board ID
     args[2] := Bid (NEP)
     args[3] := Content
