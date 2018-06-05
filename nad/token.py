@@ -5,7 +5,8 @@ Basic settings for an NEP5 Token and crowdsale
 from boa.interop.Neo.Storage import *
 
 # My Definition
-AD_COUNT_KEY = "NeonAD.count"
+# AD_COUNT_KEY = "NeonAD.count"
+AD_LIST_KEY = "NeonAD.list"
 DEFAULT_CONTENT_KEY = "NeonAD.default"
 CONTRACT_OWNER = b'#\xba\'\x03\xc52c\xe8\xd6\xe5"\xdc2 39\xdc\xd8\xee\xe9'
 

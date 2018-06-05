@@ -65,7 +65,7 @@ def perform_exchange(ctx):
      """
 
     attachments = get_asset_attachments()  # [receiver, sender, neo, gas]
-
+    print('attachments')
     # this looks up whether the exchange can proceed
     exchange_ok = can_exchange(ctx, attachments, False)
 
@@ -118,22 +118,24 @@ def can_exchange(ctx, attachments, verify_only):
     """
 
     # if you are accepting gas, use this
-#        if attachments[3] == 0:
-#            print("no gas attached")
-#            return False
+       # if attachments[3] == 0:
+       #     print("no gas attached")
+       #     return False
 
     # if youre accepting neo, use this
 
     if attachments[2] == 0:
+        print("no NEO attached")
         return False
 
     # the following looks up whether an address has been
     # registered with the contract for KYC regulations
     # this is not required for operation of the contract
 
-#        status = get_kyc_status(attachments.sender_addr, storage)
+
     if not get_kyc_status(ctx, attachments[1]):
-        return False
+        pass
+        # return False
 
     # caluclate the amount requested
     amount_requested = attachments[2] * TOKENS_PER_NEO / 100000000

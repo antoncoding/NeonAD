@@ -1,4 +1,4 @@
-from boa.interop.Neo.Runtime import CheckWitness, Log, GetTime, GetTrigger
+from boa.interop.Neo.Runtime import CheckWitness, Log, GetTime, GetTrigger, Serialize, Deserialize
 from boa.interop.Neo.Storage import GetContext, Put, Delete, Get
 from boa.interop.Neo.Blockchain import GetHeader, GetHeight
 from boa.interop.Neo.Header import GetTimestamp
@@ -32,7 +32,7 @@ def Main(operation, args):
             return True
 
         attachments = get_asset_attachments()
-        return can_exchange(ctx, attachments, True)
+        return can_exchange(ctx, attachments, verify_only=True)
 
     # Main Application Operation
     elif trigger == Application():
@@ -44,6 +44,11 @@ def Main(operation, args):
         if operation == "getEndTime":
             return get_endtime(ctx, args)
 
+        elif operation == "getBoardList":
+            return get_baord_list()
+
+        elif operation == "getContent":
+            return get_content(ctx, args)
 
         # ICO crowdsale function
         elif operation == 'circulation':
@@ -104,8 +109,8 @@ def deploy():
     if not Get(ctx, 'initialized'):
         # do deploy logic
         Put(ctx, 'initialized', 1)
+        Put(ctx, AD_LIST_KEY, Serialize([]))
         Put(ctx, CONTRACT_OWNER, TOKEN_INITIAL_AMOUNT)
-        Put(ctx, AD_COUNT_KEY, 0)
         return add_to_circulation(ctx, TOKEN_INITIAL_AMOUNT)
 
     return False
@@ -114,8 +119,39 @@ def deploy():
 def get_default_content():
     return Get(ctx, DEFAULT_CONTENT_KEY)
 
+
 def get_ad_count():
-    return Get(ctx, AD_COUNT_KEY)
+    serialized_list = Get(ctx, AD_LIST_KEY)
+    board_list = Deserialize(serialized_list)
+    return len(board_list)
+
+
+def get_baord_list():
+    serialized_list = Get(ctx, AD_LIST_KEY)
+    return Deserialize(serialized_list)
+
+
+def get_content(ctx, args):
+    if len(args)==4:
+        board_id = args[1]
+        return Get(ctx, get_content_key(board_id))
+
+
+def add_new_board(board_id):
+    serialized_list = Get(ctx, AD_LIST_KEY)
+    board_list = Deserialize(serialized_list)
+    board_list.append(board_id)
+    serizlized_list = Serialize(board_list)
+    Put(ctx, AD_LIST_KEY, serizlized_list)
+    return True
+
+def check_board_exist(board_id):
+    serialized_list = Get(ctx, AD_LIST_KEY)
+    board_list = Deserialize(serialized_list)
+    if board_id in board_list:
+        return True
+    else:
+        return False
 
 def update_board_round(board_id):
     # update ruond end date
@@ -175,8 +211,9 @@ def bid_for_board(board_id, bidder, bid, content):
 
 # Application Functions
 def get_endtime(ctx, args):
-    board_id = args[1]
-    return Get(ctx, get_endtime_key(board_id))
+    if len(args) == 2:
+        board_id = args[1]
+        return Get(ctx, get_endtime_key(board_id))
 
 
 def create_board(ctx, args):
@@ -185,18 +222,18 @@ def create_board(ctx, args):
     args[1] := domain name
     args[2] := bid round (second)
     """
-    user_hash = args[0]
-    domain_name = args[1]
-    period = args[2]
+    if len(args) == 3:
+        user_hash = args[0]
+        domain_name = args[1]
+        period = args[2]
 
-    ad_count =  get_ad_count() + 1
-    board_id = concat("NeonAD", ad_count)
-    Put(ctx, AD_COUNT_KEY, ad_count)
+        ad_count =  get_ad_count() + 1
+        board_id = concat("NeonAD", ad_count)
+        init_sucess = init_board_info(board_id, user_hash, period, domain_name)
+        add_success = add_new_board(board_id)
+        update_success = update_board_round(board_id)
 
-    init_sucess = init_board_info(board_id, user_hash, period, domain_name)
-    update_success = update_board_round(board_id)
-
-    return board_id
+        return board_id
 
 
 def bid_for_ad(ctx, args):
@@ -205,20 +242,24 @@ def bid_for_ad(ctx, args):
     args[2] := Bid (NEP)
     args[3] := Content
     """
-    user_hash = args[0]
-    board_id = args[1]
-    bid = args[2]
+    if len(args) ==4 :
+        user_hash = args[0]
+        board_id = args[1]
+        bid = args[2]
+        expired = check_expired(board_id)
+        if expired:
+            success = update_board_round(board_id)
+            if success:
+                print('Going into next Round')
+            else:
+                print('Update Round Error')
+                return False
 
-    expired = check_expired(board_id)
-    if expired:
-        update_board_round()
-        print('Going into next Round')
+        content = args[3]
+        if bid_for_board(board_id, user_hash, bid, content) == True:
+            return 'Bid Placed'
 
-    content = args[3]
-    if bid_for_board(board_id, user_hash, bid, content) == True:
-        return 'Bid Placed'
-    else:
-        return 'Bid Failed'
+    return 'Bid Failed'
 
 
 def edit_content(ctx, args):
@@ -227,26 +268,28 @@ def edit_content(ctx, args):
     args[1] := board ID
     args[2] := new content
     """
-    user_hash = args[0]
-    board_id = args[1]
-    new_content = args[2]
-    if user_hash != Get(ctx, get_owner_key(board_id)):
-        print('User is not authenticated to edit content of this board')
-        return False
-    else:
-        '''
-        Some Other checks on the incoming content
-        '''
-        Put(ctx, get_content_key(board_id), new_content)
-        return True
+    if len(args) == 3:
+        user_hash = args[0]
+        board_id = args[1]
+        new_content = args[2]
+        if user_hash != Get(ctx, get_owner_key(board_id)):
+            print('User is not authenticated to edit content of this board')
+            return False
+        else:
+            '''
+            Some Other checks on the incoming content
+            '''
+            Put(ctx, get_content_key(board_id), new_content)
+            return True
 
 
 def set_default_content(ctx, args):
-    if CheckWitness(CONTRACT_OWNER):
+    if CheckWitness(CONTRACT_OWNER) and len(args)==2:
         print('test')
         ad_content = args[1]
         Put(ctx, DEFAULT_CONTENT_KEY, ad_content)
-        return ad_content
+        print('Update Default Content Successfully')
+        return True
     else:
         print('This Function can only be triggered by admin')
         return False
