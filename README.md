@@ -13,7 +13,8 @@ We will integrate this feature to `nOS virtual browser`, which is a NEO-backend 
 
 
 ### NAD Tokens
-* **Token Name** NeonAD
+* **Token Name**: NeonAD
+* **Token Symbol**: NAD
 * **Token Standard**: NEP5
 * **Total Supply**: 10,000,000
 
