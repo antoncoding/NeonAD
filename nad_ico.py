@@ -72,22 +72,3 @@ def Main(operation, args):
         return 'unknown operation'
 
     return False
-
-
-def deploy():
-    """
-    :param token: Token The token to deploy
-    :return:
-        bool: Whether the operation was successful
-    """
-    if not CheckWitness(TOKEN_OWNER):
-        print("Must be owner to deploy")
-        return False
-
-    if not Get(ctx, 'initialized'):
-        # do deploy logic
-        Put(ctx, 'initialized', 1)
-        Put(ctx, TOKEN_OWNER, TOKEN_INITIAL_AMOUNT)
-        return add_to_circulation(ctx, TOKEN_INITIAL_AMOUNT)
-
-    return False

@@ -4,14 +4,18 @@ Basic settings for an NEP5 Token and crowdsale
 
 from boa.interop.Neo.Storage import *
 
-TOKEN_NAME = 'Neon AD'
+# My Definition
+AD_COUNT_KEY = "NeonAD.count"
+DEFAULT_CONTENT_KEY = "NeonAD.default"
+CONTRACT_OWNER = b'#\xba\'\x03\xc52c\xe8\xd6\xe5"\xdc2 39\xdc\xd8\xee\xe9'
 
+TOKEN_NAME = 'NeonAD'
 TOKEN_SYMBOL = 'NAD'
-
 TOKEN_DECIMALS = 8
 
 # This is the script hash of the address for the owner of the token
 # This can be found in ``neo-python`` with the walet open, use ``wallet`` command
+
 TOKEN_OWNER = b'#\xba\'\x03\xc52c\xe8\xd6\xe5"\xdc2 39\xdc\xd8\xee\xe9'
 
 TOKEN_CIRC_KEY = b'in_circulation'

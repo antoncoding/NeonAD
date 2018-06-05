@@ -1,6 +1,8 @@
 from boa.interop.Neo.Storage import GetContext, Put, Delete, Get
 from boa.builtins import concat
+from nad.token import *
 
+# My Key Retrieval Functions
 def get_content_key(board_id):
     return concat(board_id, ".content")
 
