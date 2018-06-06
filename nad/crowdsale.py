@@ -133,13 +133,11 @@ def can_exchange(ctx, attachments, verify_only):
     # this is not required for operation of the contract
 
 
-    if not get_kyc_status(ctx, attachments[1]):
-        pass
+    # if not get_kyc_status(ctx, attachments[1]):
         # return False
 
     # caluclate the amount requested
     amount_requested = attachments[2] * TOKENS_PER_NEO / 100000000
-
     # this would work for accepting gas
     # amount_requested = attachments.gas_attached * token.tokens_per_gas / 100000000
 
@@ -180,11 +178,14 @@ def calculate_can_exchange(ctx, amount, address, verify_only):
     if new_amount > TOKEN_TOTAL_SUPPLY:
         return False
 
-    if height < BLOCK_SALE_START:
-        return False
+    # block_start = Get(ctx, BLOCK_SALE_START_KEY)
+    # if height < block_start:
+    #     return False
 
     # if we are in free round, any amount
-    if height > LIMITED_ROUND_END:
+    limited_round_end = Get(ctx, BLOCK_SALE_LIMIT_END_KEY)
+    if height > limited_round_end:
+        print('Limited Round End')
         return True
 
     # check amount in limited round

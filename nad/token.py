@@ -31,14 +31,16 @@ TOKENS_PER_NEO = 50 * 100000000
 # for now assume 1 dollar per token, and one gas = 20 dollars * 10^8
 TOKENS_PER_GAS = 20 * 100000000
 
-# maximum amount you can mint in the limited round ( 500 neo/person * 40 Tokens/NEO * 10^8 )
-MAX_EXCHANGE_LIMITED_ROUND = 500 * 40 * 100000000
+# maximum amount you can mint in the limited round ( 500 neo/person * 50 Tokens/NEO * 10^8 )
+MAX_EXCHANGE_LIMITED_ROUND = 500 * 50 * 100000000
 
 # when to start the crowdsale
-BLOCK_SALE_START = 755000
-
+BLOCK_SALE_START_KEY  = 'start_block'
+BLOCK_SALE_LIMIT_END_KEY = 'limit_end_block'
+ICO_LIMITED_DURATION = 80000
+# BLOCK_SALE_START = 1000
 # when to end the initial limited round
-LIMITED_ROUND_END = 755000 + 10000
+# LIMITED_ROUND_END = 1000 + 80000
 
 KYC_KEY = b'kyc_ok'
 

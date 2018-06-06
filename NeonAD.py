@@ -115,6 +115,11 @@ def deploy():
         Put(ctx, 'initialized', 1)
         Put(ctx, AD_LIST_KEY, Serialize([]))
         Put(ctx, CONTRACT_OWNER, TOKEN_INITIAL_AMOUNT)
+        # Set ICO Start and end date
+        height = GetHeight()
+        Put(ctx, BLOCK_SALE_START_KEY, height)
+        Put(ctx, BLOCK_SALE_LIMIT_END_KEY, height + ICO_LIMITED_DURATION)
+
         return add_to_circulation(ctx, TOKEN_INITIAL_AMOUNT)
 
     return False
