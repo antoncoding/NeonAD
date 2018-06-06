@@ -45,41 +45,28 @@ def Main(operation, args):
                 return handle_nep51(ctx, operation, args)
 
         # Functions that can be called by anyone
-
-        elif operation == "getBoardList":
-            return get_baord_list()
+        if operation == "getBoardList":
+            return get_board_list()
 
         elif operation == "getContent":
             return get_content(ctx, args)
 
-        elif operation == "getBoardInfo":
-            return get_board_info(ctx, args)
+        elif operation == "getRoundInfo":
+            return get_round_info(ctx, args)
+
+        elif operation == "getEndTime":
+            return get_endtime(ctx,args)
 
         # ICO crowdsale function
         elif operation == 'circulation':
             return get_circulation(ctx)
-
-        elif operation == 'mintTokens':
-            return perform_exchange(ctx)
-
-        elif operation == 'crowdsale_register':
-            return kyc_register(ctx, args)
-
-        elif operation == 'crowdsale_status':
-            return kyc_status(ctx, args)
-
-        elif operation == 'crowdsale_available':
-            return crowdsale_available_amount(ctx)
-
-        elif operation == 'get_attachments':
-            return get_asset_attachments()
 
         # # Main Operations on SC
         # # Functions that Require Authorization
         user_hash = args[0]
         authorized = CheckWitness(user_hash)
         if not authorized:
-            return False
+            return 'CheckWitness Failed'
         Log("Authorized")
 
         if operation == "createBoard":
@@ -101,6 +88,23 @@ def Main(operation, args):
         elif operation == 'deploy':
             return deploy(ctx)
 
+        # ICO related
+        elif operation == 'mintTokens':
+            return perform_exchange(ctx)
+
+        elif operation == 'crowdsale_register':
+            return kyc_register(ctx, args)
+
+        elif operation == 'crowdsale_status':
+            return kyc_status(ctx, args)
+
+        elif operation == 'crowdsale_available':
+            return crowdsale_available_amount(ctx)
+
+        elif operation == 'get_attachments':
+            return get_asset_attachments()
+
+
         else:
             return 'Unknown Operation'
 
@@ -111,8 +115,7 @@ def deploy():
         bool: Whether the operation was successful
     """
     if not CheckWitness(CONTRACT_OWNER):
-        print("Must be owner to deploy")
-        return False
+        return "Must be owner to deploy"
 
     if not Get(ctx, 'initialized'):
         # do deploy logic
@@ -126,7 +129,7 @@ def deploy():
 
         return add_to_circulation(ctx, TOKEN_INITIAL_AMOUNT)
 
-    return False
+    return 'Deploy Failed'
 
 
 def get_default_content():
@@ -139,7 +142,7 @@ def get_ad_count():
     return len(board_list)
 
 
-def get_baord_list():
+def get_board_list():
     serialized_list = Get(ctx, AD_LIST_KEY)
     board_list = Deserialize(serialized_list)
     if len(board_list) == 0:
@@ -163,7 +166,7 @@ def add_new_board(board_id):
     board_list.append(board_id)
     serizlized_list = Serialize(board_list)
     Put(ctx, AD_LIST_KEY, serizlized_list)
-    return True
+    return 'Successfully Created  '
 
 def check_board_exist(board_id):
     serialized_list = Get(ctx, AD_LIST_KEY)
@@ -357,18 +360,21 @@ def edit_period(ctx, args):
         return False
 
 
-def get_board_info(ctx, args):
+def get_round_info(ctx, args):
     '''
     args[0] := user_hash
     args[1] := board ID
+    return: serialized_map
     '''
+    # return False
     board_id = args[1]
-    current_owner = Get(ctx, get_owner_key(board_id))
-    current_content = Get(ctx, get_content_key(board_id))
+    if not check_board_exist(board_id):
+        return 'Error:board id not found.'
     endtime = Get(ctx, get_endtime_key(board_id))
-    highest_bid = Get(ctx, get_highest_bid_key(board_id))
     highest_bidder = Get(ctx, get_highest_bidder_key(board_id))
-
+    highest_bid = Get(ctx, get_highest_bid_key(board_id))
+    rd = {"endtime":endtime, "highest_bid":highest_bid, "highest_bidder":highest_bidder}
+    return Serialize(rd)
 
 
 def set_default_content(ctx, args):
@@ -376,15 +382,13 @@ def set_default_content(ctx, args):
         print('test')
         ad_content = args[1]
         Put(ctx, DEFAULT_CONTENT_KEY, ad_content)
-        print('Update Default Content Successfully')
-        return True
+        return 'Successfully Update Default Content'
+
     else:
-        print('This Function can only be triggered by admin')
-        return False
+        return 'This Function can only be triggered by admin'
 
 
 def pay_in_token(ctx, t_from, t_to, amount):
-    print('Start Paying')
     if amount <= 0:
         return False
     if len(t_to) != 20:
