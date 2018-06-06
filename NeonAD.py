@@ -45,14 +45,15 @@ def Main(operation, args):
                 return handle_nep51(ctx, operation, args)
 
         # Functions that can be called by anyone
-        if operation == "getEndTime":
-            return get_endtime(ctx, args)
 
         elif operation == "getBoardList":
             return get_baord_list()
 
         elif operation == "getContent":
             return get_content(ctx, args)
+
+        elif operation == "getBoardInfo":
+            return get_board_info(ctx, args)
 
         # ICO crowdsale function
         elif operation == 'circulation':
@@ -89,6 +90,9 @@ def Main(operation, args):
 
         elif operation == "editContent":
             return edit_content(ctx, args)
+
+        elif operation == "editPeriod":
+            return edit_period(ctx, args)
 
         # Functions Only Available from Contract Owner
         elif operation == "setDefaultContent":
@@ -137,7 +141,14 @@ def get_ad_count():
 
 def get_baord_list():
     serialized_list = Get(ctx, AD_LIST_KEY)
-    return Deserialize(serialized_list)
+    board_list = Deserialize(serialized_list)
+    if len(board_list) == 0:
+        return ''
+    return_str = ""
+    for _id in board_list:
+        return_str = concat(return_str, _id)
+        return_str = concat(return_str, ",")
+    return return_str
 
 
 def get_content(ctx, args):
@@ -317,6 +328,47 @@ def edit_content(ctx, args):
             '''
             Put(ctx, get_content_key(board_id), new_content)
             return True
+
+
+def edit_period(ctx, args):
+    """
+    args[0] := user_hash
+    args[1] := board ID
+    args[2] := new_period
+    """
+    if len(args) == 3:
+        user_hash = args[0]
+        board_id = args[1]
+        new_period = args[2]
+        if not check_board_exist(board_id):
+            return False
+
+        if user_hash != Get(ctx, get_owner_key(board_id)):
+            print('User is not authenticated to edit content of this board')
+            return False
+        else:
+            '''
+            Some Other checks on new bidding round period
+            '''
+            if new_period > 1200:
+                Put(ctx, get_period_key(board_id), new_period)
+                return True
+
+        return False
+
+
+def get_board_info(ctx, args):
+    '''
+    args[0] := user_hash
+    args[1] := board ID
+    '''
+    board_id = args[1]
+    current_owner = Get(ctx, get_owner_key(board_id))
+    current_content = Get(ctx, get_content_key(board_id))
+    endtime = Get(ctx, get_endtime_key(board_id))
+    highest_bid = Get(ctx, get_highest_bid_key(board_id))
+    highest_bidder = Get(ctx, get_highest_bidder_key(board_id))
+
 
 
 def set_default_content(ctx, args):
