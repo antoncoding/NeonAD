@@ -26,17 +26,33 @@ We will integrate this feature to `nOS virtual browser`, which is a NEO-backend 
   - Also a relay server for non-blockchain browsers
 
 ### Functions
+Please see the code for argument details
+
+* #### Contract Owner Functions
 * `deploy`
-* `getBoardList`
-* `getContent`
+* `setDefaultContent`
+* #### Board Owner Contracts
 * `createBoard`
+* `edit_period`
+* #### Login User Functions
 * `bidForBoard`
 * `editContent`
-* `setDefaultContent`
+* `mintTokens` (attach with NEO)
+
+* #### Public Methods
+* `getBoardList`
+* `getContent`
+
 
 
 ### Contract Hash:
-> 0xa9d75040f97bf2fb5bec11592bf7a36b222f626d
+Will be provided here when we publish our first release on Testnet.
 
-The Contract Hash should be the same if you deploy our `.avm` file
-Use this hash to add our token to your list
+## nOS Dapp
+I'm also building a nOS Dapp Interface for **NeonAD**, you can visit this link to take a look:
+
+https://github.com/antoncoding/nOS-dapp
+
+### Issue Report or Contribution
+Just open an `issue` submit a `pull request`. Any advice or suggestion is welcomed.
+I'm looking for partners as well, if you're interested in this project, you can always contact me through email address provided in my profile.
