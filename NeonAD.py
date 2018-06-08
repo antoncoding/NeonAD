@@ -149,6 +149,7 @@ def get_board_list():
         return ''
     return_str = ""
     for _id in board_list:
+        print(_id)
         return_str = concat(return_str, _id)
         return_str = concat(return_str, ",")
     return return_str
@@ -264,20 +265,28 @@ def create_board(ctx, args):
     args[0] := user_hash
     args[1] := domain name
     args[2] := bid round (second)
+    args[3] := nad token to stack
     """
-    if len(args) == 3:
+    if len(args) == 4:
         user_hash = args[0]
         domain_name = args[1]
         period = args[2]
+        stack_token = args[3]
 
-        ad_count =  get_ad_count() + 1
-        board_id = concat("NeonAD", ad_count)
-        init_sucess = init_board_info(board_id, user_hash, period, domain_name)
-        add_success = add_new_board(board_id)
-        update_success = update_board_round(board_id)
+        # board_id = GetTime()*get_ad_count()
+        board_id = concat(TOKEN_SYMBOL, GetTime())
 
-        return board_id
+        if check_board_exist(board_id):
+            return 'board creation ID error, Please try again later.'
+        # Stack NAD token to get Listed
+        if pay_in_token(ctx, user_hash, CONTRACT_OWNER, stack_token):
+            init_sucess = init_board_info(board_id, user_hash, period, domain_name)
+            add_success = add_new_board(board_id)
+            update_success = update_board_round(board_id)
 
+            return board_id
+
+        return 'insufficient NAD token to stack'
 
 def bid_for_board(ctx, args):
     """
