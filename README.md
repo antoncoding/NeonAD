@@ -28,18 +28,20 @@ We will integrate this feature to `nOS virtual browser`, which is a NEO-backend 
 ### Functions
 Please see the code for argument details
 
-* #### Contract Owner Functions
+#### Contract Owner Functions
 * `deploy`
 * `setDefaultContent`
-* #### Board Owner Contracts
+
+#### Board Owner Contracts
 * `createBoard`
 * `edit_period`
-* #### Login User Functions
+
+#### Login User Functions
 * `bidForBoard`
 * `editContent`
 * `mintTokens` (attach with NEO)
 
-* #### Public Methods
+#### Public Methods
 * `getBoardList`
 * `getContent`
 
