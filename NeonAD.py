@@ -274,7 +274,8 @@ def create_board(ctx, args):
         stack_token = args[3]
 
         # board_id = GetTime()*get_ad_count()
-        board_id = concat(TOKEN_SYMBOL, GetTime())
+        ad_count =  get_ad_count() + GetTime()
+        board_id = concat("NeonAD", ad_count)
 
         if check_board_exist(board_id):
             return 'board creation ID error, Please try again later.'
