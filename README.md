@@ -34,7 +34,8 @@ Please see the code for argument details
 
 #### Board Owner Contracts
 * `createBoard`
-* `edit_period`
+* `editPeriod`
+* `deleteBoard`
 
 #### Login User Functions
 * `bidForBoard`

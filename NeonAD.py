@@ -81,6 +81,8 @@ def Main(operation, args):
         elif operation == "editPeriod":
             return edit_period(ctx, args)
 
+        elif operation == "deleteBoard":
+            return delete_board(ctx, args)
         # Functions Only Available from Contract Owner
         elif operation == "setDefaultContent":
             return set_default_content(ctx, args)
@@ -155,7 +157,7 @@ def get_board_list():
         print(_id)
         return_str = concat(return_str, _id)
         return_str = concat(return_str, ",")
-    return return_str
+    return return_str[:-1]
 
 
 def get_content(ctx, args):
@@ -164,13 +166,26 @@ def get_content(ctx, args):
         return Get(ctx, get_content_key(board_id))
 
 
-def add_new_board(board_id):
+def add_to_board_list(board_id):
     serialized_list = Get(ctx, AD_LIST_KEY)
     board_list = Deserialize(serialized_list)
     board_list.append(board_id)
     serizlized_list = Serialize(board_list)
     Put(ctx, AD_LIST_KEY, serizlized_list)
-    return 'Successfully Created  '
+    return True
+
+
+def delete_from_board_list(board_id):
+    if check_board_exist(board_id):
+        serialized_list = Get(ctx, AD_LIST_KEY)
+        board_list = Deserialize(serialized_list)
+        board_list = remove_from_list(board_list, board_id)
+        serialized_list = Serialize(board_list)
+        Put(ctx, AD_LIST_KEY, serialized_list)
+        return True
+    else:
+        return False
+
 
 def check_board_exist(board_id):
     serialized_list = Get(ctx, AD_LIST_KEY)
@@ -180,16 +195,21 @@ def check_board_exist(board_id):
             return True
     return False
 
+
 def update_board_round(board_id):
     # update ruond end date
-
-    payment = Get(ctx, get_highest_bid_key(board_id))
+    highest_bid = Get(ctx, get_highest_bid_key(board_id))
+    unpaid_payment = Get(ctx, get_unpaid_key(board_id))
     board_admin = Get(ctx, get_ad_admin_key(board_id))
-    # pay web owner
-    if payment > 0:
-        success = pay_in_token(ctx, CONTRACT_OWNER, board_admin, payment)
-        if not success:
-            return False
+
+    # Store unpaid tokens (revenue) to storage
+    success = pay_in_token(ctx, CONTRACT_OWNER, board_admin)
+    if not success:
+        print('Payment error.')
+        return False
+
+    # Update Payment to be received after next period
+    Put(ctx, get_unpaid_key(board_id), highest_bid)
 
     period = Get(ctx, get_period_key(board_id))
     round_end = GetTime() + period
@@ -284,12 +304,57 @@ def create_board(ctx, args):
         # Stack NAD token to get Listed
         if pay_in_token(ctx, user_hash, CONTRACT_OWNER, stack_token):
             init_sucess = init_board_info(board_id, user_hash, period, domain_name, stack_token)
-            add_success = add_new_board(board_id)
+            add_success = add_to_board_list(board_id)
             update_success = update_board_round(board_id)
 
             return board_id
 
         return 'insufficient NAD token to stack'
+
+
+def delete_board(ctx, args):
+    """
+    args[0] := user_hash
+    args[1] := board_id
+    """
+    board_id = args[1]
+
+    # Check Expired
+    if check_expired(board_id):
+        success = update_board_round(board_id)
+        if not success:
+            return False
+    # Refund Current Owner
+    unpaid = Get(ctx, get_unpaid_key(board_id))
+    if unpaid:
+        current_owner = Get(ctx, get_owner_key(board_id))
+        if not pay_in_token(ctx, CONTRACT_OWNER, current_owner, unpaid):
+            return False
+    # Refund highest bidder
+    highest_bid = Get(ctx, get_highest_bid_key(board_id))
+    highest_bidder = Get(ctx, get_highest_bidder_key(board_id))
+    if not pay_in_token(ctx, CONTRACT_OWNER, highest_bidder, highest_bid):
+        return False
+    # Pay back stacked tokens
+    board_admin = Get(ctx, get_ad_admin_key(board_id))
+    stacks = Get(ctx, get_stack_key(board_id))
+    if not pay_in_token(ctx, CONTRACT_OWNER, board_admin, stacks):
+        return False
+    # Delete
+    if delete_from_board_list(board_id):
+        Delete(ctx, get_unpaid_key(board_id))
+        Delete(ctx, get_content_key(board_id))
+        Delete(ctx, get_stack_key(board_id))
+        Delete(ctx, get_endtime_key(board_id))
+        Delete(ctx, get_highest_bidder_key(board_id))
+        Delete(ctx, get_highest_bid_key(board_id))
+        Delete(ctx, get_period_key(board_id))
+        Delete(ctx, get_next_content_key(board_id))
+        Delete(ctx, get_owner_key(board_id))
+        Delete(ctx, get_ad_admin_key(board_id))
+        Delete(ctx, get_domain_key(board_id))
+        return True
+
 
 def bid_for_board(ctx, args):
     """
@@ -305,13 +370,10 @@ def bid_for_board(ctx, args):
             print('boad id error')
             return False
         bid = args[2]
-        expired = check_expired(board_id)
-        if expired:
+        # Check Expired
+        if check_expired(board_id):
             success = update_board_round(board_id)
-            if success:
-                print('Going into next Round')
-            else:
-                print('Update Round Error')
+            if not success:
                 return False
 
         content = args[3]
@@ -333,6 +395,11 @@ def edit_content(ctx, args):
         new_content = args[2]
         if not check_board_exist(board_id):
             return False
+        # Check Expired
+        if check_expired(board_id):
+            success = update_board_round(board_id)
+            if not success:
+                return False
 
         if user_hash != Get(ctx, get_owner_key(board_id)):
             print('User is not authenticated to edit content of this board')
@@ -357,6 +424,11 @@ def edit_period(ctx, args):
         new_period = args[2]
         if not check_board_exist(board_id):
             return False
+        # Check Expired
+        if check_expired(board_id):
+            success = update_board_round(board_id)
+            if not success:
+                return False
 
         if user_hash != Get(ctx, get_owner_key(board_id)):
             print('User is not authenticated to edit content of this board')
@@ -378,10 +450,15 @@ def get_round_info(ctx, args):
     args[1] := board ID
     return: serialized_map
     '''
-    # return False
     board_id = args[1]
     if not check_board_exist(board_id):
         return 'Error:board id not found.'
+    # Check Expired
+    if check_expired(board_id):
+        success = update_board_round(board_id)
+        if not success:
+            return False
+
     endtime = Get(ctx, get_endtime_key(board_id))
     highest_bidder = Get(ctx, get_highest_bidder_key(board_id))
     highest_bid = Get(ctx, get_highest_bid_key(board_id))

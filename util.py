@@ -10,14 +10,14 @@ def remove_from_list(target_list, item):
     return returnlist
 
 # My Key Retrieval Functions
+def get_unpaid_key(board_id):
+    return concat(board_id, ".unpaid")
+
 def get_content_key(board_id):
     return concat(board_id, ".content")
 
 def get_stack_key(board_id):
     return concat(board_id, ".stack")
-
-def get_owner_key(board_id):
-    return concat(board_id, ".owner")
 
 def get_endtime_key(board_id):
     return concat(board_id, ".endtime")
