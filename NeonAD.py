@@ -138,6 +138,9 @@ def get_default_content():
 
 def get_ad_count():
     serialized_list = Get(ctx, AD_LIST_KEY)
+    if not serialized_list:
+        return 0
+
     board_list = Deserialize(serialized_list)
     return len(board_list)
 
@@ -203,11 +206,12 @@ def update_board_round(board_id):
     return True
 
 
-def init_board_info(board_id, creator, period, domain_name):
+def init_board_info(board_id, creator, period, domain_name, stack):
     # Save Basic Info about a board: period, creator, domain_name
     Put(ctx, get_period_key(board_id), period)
     Put(ctx, get_ad_admin_key(board_id), creator)
     Put(ctx, get_domain_key(board_id), domain_name)
+    Put(ctx, get_stack_key(board_id), stack)
     # Put Default value into Board[Next Round]
     Put(ctx, get_highest_bid_key(board_id), 0)
     Put(ctx, get_highest_bidder_key(board_id), creator)
@@ -273,15 +277,13 @@ def create_board(ctx, args):
         period = args[2]
         stack_token = args[3]
 
-        # board_id = GetTime()*get_ad_count()
-        ad_count =  get_ad_count() + GetTime()
-        board_id = concat("NeonAD", ad_count)
+        board_id = GetTime() + get_ad_count()
 
         if check_board_exist(board_id):
             return 'board creation ID error, Please try again later.'
         # Stack NAD token to get Listed
         if pay_in_token(ctx, user_hash, CONTRACT_OWNER, stack_token):
-            init_sucess = init_board_info(board_id, user_hash, period, domain_name)
+            init_sucess = init_board_info(board_id, user_hash, period, domain_name, stack_token)
             add_success = add_new_board(board_id)
             update_success = update_board_round(board_id)
 

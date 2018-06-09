@@ -2,9 +2,19 @@ from boa.interop.Neo.Storage import GetContext, Put, Delete, Get
 from boa.builtins import concat
 from nad.token import *
 
+def remove_from_list(target_list, item):
+    returnlist = []
+    for i in target_list:
+        if i != item:
+            returnlist.append(i)
+    return returnlist
+
 # My Key Retrieval Functions
 def get_content_key(board_id):
     return concat(board_id, ".content")
+
+def get_stack_key(board_id):
+    return concat(board_id, ".stack")
 
 def get_owner_key(board_id):
     return concat(board_id, ".owner")
