@@ -193,6 +193,7 @@ def check_board_exist(board_id):
     for _id in board_list:
         if _id == board_id:
             return True
+    print('boad id error')
     return False
 
 
@@ -244,6 +245,7 @@ def check_expired(board_id):
     board_end_timestamp = Get(ctx, get_endtime_key(board_id))
     if board_end_timestamp > GetTime():
         return False
+    print('Board round Expired! Going to next round..')
     return True
 
 
@@ -321,8 +323,7 @@ def delete_board(ctx, args):
 
     # Check Expired
     if check_expired(board_id):
-        success = update_board_round(board_id)
-        if not success:
+        if not update_board_round(board_id):
             return False
     # Refund Current Owner
     unpaid = Get(ctx, get_unpaid_key(board_id))
@@ -367,13 +368,11 @@ def bid_for_board(ctx, args):
         user_hash = args[0]
         board_id = args[1]
         if not check_board_exist(board_id):
-            print('boad id error')
             return False
         bid = args[2]
         # Check Expired
         if check_expired(board_id):
-            success = update_board_round(board_id)
-            if not success:
+            if not update_board_round(board_id):
                 return False
 
         content = args[3]
@@ -397,8 +396,7 @@ def edit_content(ctx, args):
             return False
         # Check Expired
         if check_expired(board_id):
-            success = update_board_round(board_id)
-            if not success:
+            if not update_board_round(board_id):
                 return False
 
         if user_hash != Get(ctx, get_owner_key(board_id)):
@@ -426,8 +424,7 @@ def edit_period(ctx, args):
             return False
         # Check Expired
         if check_expired(board_id):
-            success = update_board_round(board_id)
-            if not success:
+            if not update_board_round(board_id):
                 return False
 
         if user_hash != Get(ctx, get_owner_key(board_id)):
@@ -452,11 +449,10 @@ def get_round_info(ctx, args):
     '''
     board_id = args[1]
     if not check_board_exist(board_id):
-        return 'Error:board id not found.'
+        return False
     # Check Expired
     if check_expired(board_id):
-        success = update_board_round(board_id)
-        if not success:
+        if not update_board_round(board_id):
             return False
 
     endtime = Get(ctx, get_endtime_key(board_id))
