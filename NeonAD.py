@@ -193,7 +193,7 @@ def check_board_exist(board_id):
     for _id in board_list:
         if _id == board_id:
             return True
-    print('boad id error')
+    print('Board not found')
     return False
 
 
@@ -204,8 +204,7 @@ def update_board_round(board_id):
     board_admin = Get(ctx, get_ad_admin_key(board_id))
 
     # Store unpaid tokens (revenue) to storage
-    success = pay_in_token(ctx, CONTRACT_OWNER, board_admin)
-    if not success:
+    if not pay_in_token(ctx, CONTRACT_OWNER, board_admin, unpaid_payment):
         print('Payment error.')
         return False
 
@@ -258,14 +257,15 @@ def do_bid(board_id, bidder, bid, content):
     if bid > highest_bid:
 
         # pay to system
-        payment_success = pay_in_token(ctx, bidder, CONTRACT_OWNER, bid)
-        if payment_success == False:
+        if not pay_in_token(ctx, bidder, CONTRACT_OWNER, bid):
             print('Bid failed')
             return False
 
         # refund last bidder
         last_bidder = Get(ctx, get_highest_bidder_key(board_id))
-        refund_success = pay_in_token(ctx, CONTRACT_OWNER, last_bidder, highest_bid)
+        if not pay_in_token(ctx, CONTRACT_OWNER, last_bidder, highest_bid):
+            print('Refund Last Bidder Failed')
+            return False
 
         Put(ctx, get_highest_bid_key(board_id), bid)
         Put(ctx, get_highest_bidder_key(board_id), bidder)
@@ -476,7 +476,7 @@ def set_default_content(ctx, args):
 def pay_in_token(ctx, t_from, t_to, amount):
     if amount <= 0:
         return False
-    if len(t_to) != 20:
+    if len(t_to) != 20 or len(t_from) != 20:
         return False
     if t_from == t_to:
         print("transfer to self!")
