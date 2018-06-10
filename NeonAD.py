@@ -154,10 +154,9 @@ def get_board_list():
         return ''
     return_str = ""
     for _id in board_list:
-        print(_id)
         return_str = concat(return_str, _id)
         return_str = concat(return_str, ",")
-    return return_str[:-1]
+    return return_str
 
 
 def get_content(ctx, args):
@@ -255,12 +254,10 @@ def do_bid(board_id, bidder, bid, content):
     # Bid is Valid
     highest_bid = Get(ctx, get_highest_bid_key(board_id))
     if bid > highest_bid:
-
         # pay to system
         if not pay_in_token(ctx, bidder, CONTRACT_OWNER, bid):
             print('Bid failed')
             return False
-
         # refund last bidder
         last_bidder = Get(ctx, get_highest_bidder_key(board_id))
         if not pay_in_token(ctx, CONTRACT_OWNER, last_bidder, highest_bid):
@@ -474,8 +471,10 @@ def set_default_content(ctx, args):
 
 
 def pay_in_token(ctx, t_from, t_to, amount):
-    if amount <= 0:
+    if amount < 0:
         return False
+    elif amount == 0:
+        return True
     if len(t_to) != 20 or len(t_from) != 20:
         return False
     if t_from == t_to:
