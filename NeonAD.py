@@ -112,9 +112,7 @@ def Main(operation, args):
 
 def deploy():
     """
-    :param token: Token The token to deploy
-    :return:
-        bool: Whether the operation was successful
+    Deploy the contract: initialize all settings.
     """
     if not CheckWitness(CONTRACT_OWNER):
         return "Must be owner to deploy"
@@ -316,43 +314,50 @@ def delete_board(ctx, args):
     args[0] := user_hash
     args[1] := board_id
     """
-    board_id = args[1]
-
-    # Check Expired
-    if check_expired(board_id):
-        if not update_board_round(board_id):
+    if len(args) == 2:
+        board_admin = Get(ctx, get_ad_admin_key(board_id))
+        if board_admin != args[0]:
+            print('Not Autherized for Deleting thie Board!')
             return False
-    # Refund Current Owner
-    unpaid = Get(ctx, get_unpaid_key(board_id))
-    if unpaid:
-        current_owner = Get(ctx, get_owner_key(board_id))
-        if not pay_in_token(ctx, CONTRACT_OWNER, current_owner, unpaid):
-            return False
-    # Refund highest bidder
-    highest_bid = Get(ctx, get_highest_bid_key(board_id))
-    highest_bidder = Get(ctx, get_highest_bidder_key(board_id))
-    if not pay_in_token(ctx, CONTRACT_OWNER, highest_bidder, highest_bid):
-        return False
-    # Pay back stacked tokens
-    board_admin = Get(ctx, get_ad_admin_key(board_id))
-    stacks = Get(ctx, get_stack_key(board_id))
-    if not pay_in_token(ctx, CONTRACT_OWNER, board_admin, stacks):
-        return False
-    # Delete
-    if delete_from_board_list(board_id):
-        Delete(ctx, get_unpaid_key(board_id))
-        Delete(ctx, get_content_key(board_id))
-        Delete(ctx, get_stack_key(board_id))
-        Delete(ctx, get_endtime_key(board_id))
-        Delete(ctx, get_highest_bidder_key(board_id))
-        Delete(ctx, get_highest_bid_key(board_id))
-        Delete(ctx, get_period_key(board_id))
-        Delete(ctx, get_next_content_key(board_id))
-        Delete(ctx, get_owner_key(board_id))
-        Delete(ctx, get_ad_admin_key(board_id))
-        Delete(ctx, get_domain_key(board_id))
-        return True
 
+        board_id = args[1]
+
+        # Check Expired
+        if check_expired(board_id):
+            if not update_board_round(board_id):
+                return False
+        # Refund Current Owner
+        unpaid = Get(ctx, get_unpaid_key(board_id))
+        if unpaid:
+            current_owner = Get(ctx, get_owner_key(board_id))
+            if not pay_in_token(ctx, CONTRACT_OWNER, current_owner, unpaid):
+                return False
+        # Refund highest bidder
+        highest_bid = Get(ctx, get_highest_bid_key(board_id))
+        highest_bidder = Get(ctx, get_highest_bidder_key(board_id))
+        if not pay_in_token(ctx, CONTRACT_OWNER, highest_bidder, highest_bid):
+            return False
+        # Pay back stacked tokens
+        board_admin = Get(ctx, get_ad_admin_key(board_id))
+        stacks = Get(ctx, get_stack_key(board_id))
+        if not pay_in_token(ctx, CONTRACT_OWNER, board_admin, stacks):
+            return False
+        # Delete
+        if delete_from_board_list(board_id):
+            Delete(ctx, get_unpaid_key(board_id))
+            Delete(ctx, get_content_key(board_id))
+            Delete(ctx, get_stack_key(board_id))
+            Delete(ctx, get_endtime_key(board_id))
+            Delete(ctx, get_highest_bidder_key(board_id))
+            Delete(ctx, get_highest_bid_key(board_id))
+            Delete(ctx, get_period_key(board_id))
+            Delete(ctx, get_next_content_key(board_id))
+            Delete(ctx, get_owner_key(board_id))
+            Delete(ctx, get_ad_admin_key(board_id))
+            Delete(ctx, get_domain_key(board_id))
+            return True
+
+    return False
 
 def bid_for_board(ctx, args):
     """
