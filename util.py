@@ -37,7 +37,7 @@ def get_next_content_key(board_id):
 def get_owner_key(board_id):
     return concat(board_id, ".owner")
 
-def get_ad_admin_key(board_id):
+def get_board_admin_key(board_id):
     return concat(board_id, ".admin")
 
 def get_domain_key(board_id):

@@ -198,7 +198,7 @@ def update_board_round(board_id):
     # update ruond end date
     highest_bid = Get(ctx, get_highest_bid_key(board_id))
     unpaid_payment = Get(ctx, get_unpaid_key(board_id))
-    board_admin = Get(ctx, get_ad_admin_key(board_id))
+    board_admin = Get(ctx, get_board_admin_key(board_id))
 
     # Store unpaid tokens (revenue) to storage
     if not pay_in_token(ctx, CONTRACT_OWNER, board_admin, unpaid_payment):
@@ -226,7 +226,7 @@ def update_board_round(board_id):
 def init_board_info(board_id, creator, period, domain_name, stack):
     # Save Basic Info about a board: period, creator, domain_name
     Put(ctx, get_period_key(board_id), period)
-    Put(ctx, get_ad_admin_key(board_id), creator)
+    Put(ctx, get_board_admin_key(board_id), creator)
     Put(ctx, get_domain_key(board_id), domain_name)
     Put(ctx, get_stack_key(board_id), stack)
     # Put Default value into Board[Next Round]
@@ -315,7 +315,7 @@ def delete_board(ctx, args):
     args[1] := board_id
     """
     if len(args) == 2:
-        board_admin = Get(ctx, get_ad_admin_key(board_id))
+        board_admin = Get(ctx, get_board_admin_key(board_id))
         if board_admin != args[0]:
             print('Not Autherized for Deleting thie Board!')
             return False
@@ -338,7 +338,7 @@ def delete_board(ctx, args):
         if not pay_in_token(ctx, CONTRACT_OWNER, highest_bidder, highest_bid):
             return False
         # Pay back stacked tokens
-        board_admin = Get(ctx, get_ad_admin_key(board_id))
+        board_admin = Get(ctx, get_board_admin_key(board_id))
         stacks = Get(ctx, get_stack_key(board_id))
         if not pay_in_token(ctx, CONTRACT_OWNER, board_admin, stacks):
             return False
@@ -353,7 +353,7 @@ def delete_board(ctx, args):
             Delete(ctx, get_period_key(board_id))
             Delete(ctx, get_next_content_key(board_id))
             Delete(ctx, get_owner_key(board_id))
-            Delete(ctx, get_ad_admin_key(board_id))
+            Delete(ctx, get_board_admin_key(board_id))
             Delete(ctx, get_domain_key(board_id))
             return True
 
