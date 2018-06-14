@@ -4,8 +4,9 @@ from boa.interop.Neo.Action import RegisterAction
 from boa.interop.Neo.Blockchain import GetHeader, GetHeight
 from boa.interop.Neo.Header import GetTimestamp
 from boa.interop.Neo.TriggerType import Application, Verification
+# from boa.interop.BigInteger import *
 
-from boa.builtins import concat
+from boa.builtins import concat, list, range
 # Key retreival functions Definition
 from util import *
 # ICO Template
@@ -284,29 +285,31 @@ def get_endtime(ctx, args):
 def create_board(ctx, args):
     """
     args[0] := user_hash
-    args[1] := domain name
-    args[2] := bid round (second)
-    args[3] := nad token to stack
+    args[1] := board_id
+    args[2] := domain name
+    args[3] := bid round (second)
+    args[4] := nad token to stack
     """
-    if len(args) == 4:
+    if len(args) == 5:
         user_hash = args[0]
-        domain_name = args[1]
-        period = args[2]
-        stack_token = args[3]
-
-        board_id = GetTime() + get_ad_count()
+        board_id = args[1]
+        domain_name = args[2]
+        period = args[3]
+        stack_token = args[4]
 
         if check_board_exist(board_id):
-            return 'board creation ID error, Please try again later.'
+            print('Board ID Already Exist!')
+            return False
         # Stack NAD token to get Listed
         if pay_in_token(ctx, user_hash, CONTRACT_OWNER, stack_token):
             init_sucess = init_board_info(board_id, user_hash, period, domain_name, stack_token)
             add_success = add_to_board_list(board_id)
             update_success = update_board_round(board_id)
+            print('Successfully Create New Board')
+            return True
 
-            return board_id
-
-        return 'insufficient NAD token to stack'
+        print('insufficient NAD token to stack')
+        return False
 
 
 def delete_board(ctx, args):
