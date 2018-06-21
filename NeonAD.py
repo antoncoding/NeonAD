@@ -292,7 +292,7 @@ def create_board(ctx, args):
     args[4] := bid round (second)
     args[5] := nad token to stack
     """
-    if len(args) == 5:
+    if len(args) == 6:
         user_hash = args[0]
         board_id = args[1]
         domain_name = args[2]
@@ -313,7 +313,7 @@ def create_board(ctx, args):
 
         print('insufficient NAD token to stack')
         return False
-
+    print('args length error.')
 
 def delete_board(ctx, args):
     """
