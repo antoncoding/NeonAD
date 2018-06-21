@@ -224,11 +224,12 @@ def update_board_round(board_id):
     return True
 
 
-def init_board_info(board_id, creator, period, domain_name, stack):
+def init_board_info(board_id, creator, period, domain_name,category, stack):
     # Save Basic Info about a board: period, creator, domain_name
     Put(ctx, get_period_key(board_id), period)
     Put(ctx, get_board_admin_key(board_id), creator)
     Put(ctx, get_domain_key(board_id), domain_name)
+    Put(ctx, get_category_key(board_id), category)
     Put(ctx, get_stack_key(board_id), stack)
     # Put Default value into Board[Next Round]
     Put(ctx, get_highest_bid_key(board_id), 0)
@@ -287,22 +288,24 @@ def create_board(ctx, args):
     args[0] := user_hash
     args[1] := board_id
     args[2] := domain name
-    args[3] := bid round (second)
-    args[4] := nad token to stack
+    args[3] := category
+    args[4] := bid round (second)
+    args[5] := nad token to stack
     """
     if len(args) == 5:
         user_hash = args[0]
         board_id = args[1]
         domain_name = args[2]
-        period = args[3]
-        stack_token = args[4]
+        category = args[3]
+        period = args[4]
+        stack_token = args[5]
 
         if check_board_exist(board_id):
             print('Board ID Already Exist!')
             return False
         # Stack NAD token to get Listed
         if pay_in_token(ctx, user_hash, CONTRACT_OWNER, stack_token):
-            init_sucess = init_board_info(board_id, user_hash, period, domain_name, stack_token)
+            init_sucess = init_board_info(board_id, user_hash, period, domain_name,category, stack_token)
             add_success = add_to_board_list(board_id)
             update_success = update_board_round(board_id)
             print('Successfully Create New Board')

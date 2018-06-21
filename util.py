@@ -42,3 +42,6 @@ def get_board_admin_key(board_id):
 
 def get_domain_key(board_id):
     return concat(board_id, ".domain")
+
+def get_category_key(board_id):
+    return concat(board_id, ".category")
